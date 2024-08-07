@@ -1,2 +1,2 @@
-EMAIL = "albertshah534@gmail.com"
-PASSWORD = "albertshah123"
+EMAIL = "moeezaliali500@gmail.com"
+PASSWORD = "Moeez!500"

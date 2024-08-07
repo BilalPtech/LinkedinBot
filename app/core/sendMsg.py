@@ -14,6 +14,7 @@ def send_messages_to_new_connects(driver, message):
         cache = data
     else:
         raise ValueError("JSON data is not a list")
+    
     temp_list = []
     updated_cache = [link for link in cache if not (link in new_links and temp_list.append(link) or True)]
     for link in temp_list:
@@ -21,10 +22,7 @@ def send_messages_to_new_connects(driver, message):
         send_message(driver, link, message)
         delete_element(link)
 
-
-
 def get_your_connections(driver):
-
     connections_url = 'https://www.linkedin.com/mynetwork/invite-connect/connections/'
     driver.get(connections_url)
     time.sleep(5)
@@ -32,7 +30,8 @@ def get_your_connections(driver):
     profile_links = set()
     connections = driver.find_elements(By.CSS_SELECTOR, 'a[href^="/in/"]')
     for connection in connections:
-        profile_links.add(f'{connection.get_attribute("href")}')
+        href = connection.get_attribute("href")
+        profile_links.add(strip_trailing_slash(href))
     
     return profile_links
 
@@ -40,24 +39,30 @@ def send_message(driver, profile_url, message):
  
     driver.get(profile_url)
 
+    message_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'artdeco-button--primary') and contains(@class, 'pvs-profile-actions__action') and span[text()='Message']]"))
+    )
+    message_button.click()
+    
+    message_textarea = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.XPATH, "//div[@role='textbox']"))
+    )
+    message_textarea.click()
+    message_textarea.send_keys(message)
+    
     try:
-        message_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'artdeco-button--primary') and contains(@class, 'pvs-profile-actions__action') and span[text()='Message']]"))
-        )
-        message_button.click()
-        
-        message_textarea = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.XPATH, "//div[@role='textbox']"))
-        )
-        message_textarea.click()
-        message_textarea.send_keys(message)
-        
         send_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'msg-form__send-button') and contains(@class, 'artdeco-button--1')]"))
         )
-        send_button.click()
+    except:
+        send_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'msg-form__send-btn') and contains(@class, 'artdeco-button--1')]"))
+        )
+    send_button.click()
 
-        time.sleep(5)
-        
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    time.sleep(5)
+
+def strip_trailing_slash(url):
+    if url.endswith('/'):
+        return url[:-1]
+    return url
